@@ -5,7 +5,9 @@ from healpy import nside2npix
 import os
 
 data_dir = os.path.join(os.path.dirname(__file__), 'template')
+SO_data_dir = os.path.join(os.path.dirname(__file__), 'SO_template')
 template = lambda x: os.path.join(data_dir, x)
+SO_template = lambda x: os.path.join(SO_data_dir, x)
 
 def models(key, nside, pixel_indices=None, mpi_comm=None):
     model = eval(key)(nside, pixel_indices=pixel_indices, mpi_comm=mpi_comm)
@@ -264,4 +266,57 @@ def a2(nside, pixel_indices=None, mpi_comm=None):
         'pol_frac': 0.02,
         'angle_q': read_map(template('dust_q_new.fits'), nside, field=0, pixel_indices=pixel_indices, mpi_comm=mpi_comm),
         'angle_u': read_map(template('dust_u_new.fits'), nside, field=0, pixel_indices=pixel_indices, mpi_comm=mpi_comm)
+    }]
+
+def SO_d0(nside, pixel_indices=None, mpi_comm=None):
+    A_I = read_map(SO_template('dust_T.fits'), nside, field=0, pixel_indices=pixel_indices, mpi_comm=mpi_comm)
+    return [{
+        'model': 'modified_black_body',
+        'nu_0_I': 545.,
+        'nu_0_P': 353.,
+        'A_I': A_I,
+        'A_Q': read_map(SO_template('dust_Q.fits'), nside, field=0, pixel_indices=pixel_indices, mpi_comm=mpi_comm),
+        'A_U': read_map(SO_template('dust_U.fits'), nside, field=0, pixel_indices=pixel_indices, mpi_comm=mpi_comm),
+        'spectral_index': np.ones(len(A_I)) * 1.53,
+        'temp': np.ones(len(A_I)) * 19.6,
+        'add_decorrelation': False,
+    }]
+
+def SO_s0(nside, pixel_indices=None, mpi_comm=None):
+    A_I = read_map(SO_template('synch_T.fits'), nside, field=0, pixel_indices=pixel_indices, mpi_comm=mpi_comm)
+    return [{
+        'model': 'power_law',
+        'nu_0_I': 0.408,
+        'nu_0_P': 23.,
+        'A_I': A_I,
+        'A_Q': read_map(SO_template('synch_Q.fits'), nside, field=0, pixel_indices=pixel_indices, mpi_comm=mpi_comm),
+        'A_U': read_map(SO_template('synch_U.fits'), nside, field=0, pixel_indices=pixel_indices, mpi_comm=mpi_comm),
+        'spectral_index': np.ones(len(A_I)) * -3.1,
+    }]
+
+def SO_f0(nside, pixel_indices=None, mpi_comm=None):
+    return [{
+        'model': 'power_law',
+        'nu_0_I': 30.,
+        'A_I': read_map(SO_template('freefree_T.fits'), nside, field=0, pixel_indices=pixel_indices, mpi_comm=mpi_comm),
+        'spectral_index': -2.14,
+    }]
+
+def SO_a0(nside, pixel_indices=None, mpi_comm=None):
+    return [{
+        'model': 'spdust',
+        'nu_0_I': 22.8,
+        'nu_0_P': 22.8,
+        'A_I': read_map(SO_template('ame_T.fits'), nside, field=0, pixel_indices=pixel_indices, mpi_comm=mpi_comm),
+        'nu_peak_0': 30.,
+        'emissivity': loadtxt(SO_template('ame_emissivity.txt'), mpi_comm=mpi_comm, unpack=True),
+        'nu_peak': 18.95,
+    }, {
+        'model': 'spdust',
+        'nu_0_I': 41.0,
+        'nu_0_P': 41.0,
+        'A_I': read_map(SO_template('ame2_T.fits'), nside, field=0, pixel_indices=pixel_indices, mpi_comm=mpi_comm),
+        'nu_peak_0': 30.,
+        'emissivity': loadtxt(SO_template('ame_emissivity.txt'), mpi_comm=mpi_comm, unpack=True),
+        'nu_peak': 33.35,
     }]
